@@ -1,22 +1,11 @@
 {
-  "presets": [
-    "react",
-    ["env", {
-      "targets": {
-        "electron": "1.4"
-      }
-    }]
-  ],
+  "presets": ["react"],
   "plugins": [
     "transform-object-rest-spread",
-    "transform-class-properties",
-    "lodash",
-    "add-module-exports",
-    "babel-plugin-transform-decorators-legacy"
+    "transform-es2015-classes"
   ],
   "env": {
   	"production": {
-  		"presets": ["react-optimize"],
   		"plugins": [
   			"babel-plugin-transform-remove-debugger"
   		]
@@ -26,7 +15,8 @@
     },
     "test": {
       "plugins": [
-        ["webpack-loaders", { "config": "webpack.config.node.js", "verbose": false }]
+				"babel-plugin-add-module-exports",
+				"babel-plugin-transform-es2015-modules-commonjs"
       ]
     }
   }

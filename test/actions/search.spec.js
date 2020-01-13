@@ -1,5 +1,5 @@
 import expect from 'expect'
-import searchInjector from 'inject!../../app/main/actions/search'
+import searchInjector from 'inject-loader!../../app/main/actions/search'
 
 import {
   MOVE_CURSOR,
@@ -17,10 +17,14 @@ const pluginsMock = {
   'test-plugin': testPlugin
 }
 
+
 const actions = searchInjector({
   electron: {},
-  '../plugins/': pluginsMock,
-  'lib/config': {}
+  plugins: pluginsMock,
+  'lib/config': {},
+  'lib/plugins': {
+    getUserSettings: () => undefined
+  }
 })
 
 describe('reset', () => {

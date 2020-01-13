@@ -5,13 +5,14 @@ import path from 'path'
 import tar from 'tar-fs'
 import zlib from 'zlib'
 import https from 'https'
+import mv from 'mv'
 
 /**
  * Promise-wrapper for rmdir
  * @param  {String} dir
  * @return {Promise}
  */
-const removeDir = (dir) => new Promise((resolve, reject) => {
+const removeDir = dir => new Promise((resolve, reject) => {
   rmdir(dir, err => err ? reject(err) : resolve())
 })
 
@@ -29,7 +30,7 @@ const API_BASE = 'http://registry.npmjs.org/'
  * @param  {Object} header
  * @return {Object}
  */
-const formatPackageFile = (header) => ({
+const formatPackageFile = header => ({
   ...header,
   name: header.name.replace(/^package\//, '')
 })
@@ -37,8 +38,10 @@ const formatPackageFile = (header) => ({
 const installPackage = (tarPath, destination, middleware) => {
   console.log(`Extract ${tarPath} to ${destination}`)
   return new Promise((resolve, reject) => {
-    const tempPath = os.tmpdir()
-    https.get(tarPath, stream => {
+    const packageName = path.parse(destination).name
+    const tempPath = `${os.tmpdir()}/${packageName}`
+    console.log(`Download and extract to temp path: ${tempPath}`)
+    https.get(tarPath, (stream) => {
       const result = stream
         // eslint-disable-next-line new-cap
         .pipe(zlib.Unzip())
@@ -47,9 +50,10 @@ const installPackage = (tarPath, destination, middleware) => {
         }))
       result.on('error', reject)
       result.on('finish', () => {
-        middleware().then(() => (
-          fs.rename(tempPath, destination, resolve)
-        ))
+        middleware().then(() => {
+          console.log(`Move ${tempPath} to ${destination}`)
+          mv(tempPath, destination, err => err ? reject(err) : resolve())
+        })
       })
     })
   })
@@ -64,8 +68,8 @@ const installPackage = (tarPath, destination, middleware) => {
  */
 export default (dir) => {
   const packageJson = path.join(dir, 'package.json')
-  const setConfig = (config) => (
-    fs.writeFileSync(packageJson, JSON.stringify(config))
+  const setConfig = config => (
+    fs.writeFileSync(packageJson, JSON.stringify(config, null, 2))
   )
   const getConfig = () => JSON.parse(fs.readFileSync(packageJson))
   return {
@@ -87,7 +91,7 @@ export default (dir) => {
       console.group('[npm] Install package', name)
       return fetch(`${API_BASE}${name}`)
         .then(response => response.json())
-        .then(json => {
+        .then((json) => {
           versionToInstall = version || json['dist-tags'].latest
           console.log('Version:', versionToInstall)
           return installPackage(
@@ -103,7 +107,7 @@ export default (dir) => {
           setConfig(json)
           console.groupEnd()
         })
-        .catch(err => {
+        .catch((err) => {
           console.log('Error in package installation')
           console.log(err)
           console.groupEnd()
@@ -146,7 +150,7 @@ export default (dir) => {
           console.groupEnd()
           return true
         })
-        .catch(err => {
+        .catch((err) => {
           console.log('Error in package uninstallation')
           console.log(err)
           console.groupEnd()

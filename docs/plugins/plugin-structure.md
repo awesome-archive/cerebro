@@ -3,12 +3,10 @@
 This is a minimum source code of your plugin:
 
 ```js
-module.exports = {
-  fn: (scope) => console.log(scope.term)
-}
+export const fn = (scope) => console.log(scope.term)
 ```
 
-This plugin will write to console all changes in your search field of Cerebro app. So, `fn` key is a heart of your plugin: this function receives `scope` object and your can send results back to Cerebro. Scope object is:
+This plugin will write to console all changes in your search field of Cerebro app. So, `fn` key is a heart of your plugin: this function receives `scope` object and you can send results back to Cerebro. Scope object is:
 
 * `term` – `String`, entered by Cerebro user;
 * `display` – `Function(result: Object | Array<object>)`, display your result
@@ -20,24 +18,21 @@ This plugin will write to console all changes in your search field of Cerebro ap
   * `copyToClipboard` – `Function(text: String)`, copy text to clipboard;
   * `replaceTerm` – `Function(text: String)`, replace text in main Cerebro input;
   * `hideWindow` – `Function()`, hide main Cerebro window.
+* `settings` - `Object`, contains user provided values of all specified settings keys;
 
 
 Let's show something in results list:
 
 ```js
-const plugin = (scope) => {
+export const fn = (scope) => {
   scope.display({
     title: 'It works!',
     subtitle: `You entered ${scope.term}`
   })
 }
-
-module.exports = {
-  fn: plugin
-}
 ```
 
-`scope.display` accepts one or several results. Result object is:
+`scope.display` accepts one result object or array of result objects. Result object is:
 
 ## Basic fields
 ### `title`
@@ -149,3 +144,23 @@ Arguments: `message: Object` – object that you sent from `initializeAsync`
 Use this function to receive data back from your `initializeAsync` function. 
 
 Check `initializeAsync` and `onMessage` [example](./examples.md#using-initializeasync-and-onmessage)
+
+### `settings`
+Type: `Object`
+
+This object is used to specify settings that a plugin user can change. Each setting should include a `description` and a `type`. Other keys include:
+  * `label` - `String`, object key for the setting. also used to access it;
+  * `description` -  `String`, description of the setting;
+  * `type` - `String`, used to decide element for rendering a setting:
+    * `string`
+    * `number`
+    * `bool`
+    * `option`
+  * `defaultValue` - `Any`, default value for the setting;
+  * `options` - `Array`, all possible options that can be selected by the user. applicable only for `option`;
+  * `multi` - `Bool`, allows user to select more than one option for `option` settings. applicable only for `option`;
+  * `createable` - `Bool`, allows user created options. applicable only for `option`;
+
+Check `settings` [example](./examples.md#using-settings)
+
+Look at [React Select](https://github.com/JedWatson/react-select) for more details on how the `option` type works.

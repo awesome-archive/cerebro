@@ -4,7 +4,8 @@ import createMainWindow from './main/createWindow'
 import createBackgroundWindow from './background/createWindow'
 import config from './lib/config'
 import AppTray from './main/createWindow/AppTray'
-import AppUpdater from './AppUpdater'
+import autoStart from './main/createWindow/autoStart'
+import initAutoUpdater from './initAutoUpdater'
 
 let trayIconSrc = `${__dirname}/tray_icon.png`
 if (process.platform === 'darwin') {
@@ -20,16 +21,17 @@ const isDev = () => (
 let mainWindow
 let backgroundWindow
 let tray
-let appUpdater
 
 if (process.env.NODE_ENV !== 'development') {
   // Set up crash reporter before creating windows in production builds
-  crashReporter.start({
-    productName: 'Cerebro',
-    companyName: 'Cerebro',
-    submitURL: 'http://crashes.cerebroapp.com/post',
-    autoSubmit: true
-  })
+  if (config.get('crashreportingEnabled')) {
+    crashReporter.start({
+      productName: 'Cerebro',
+      companyName: 'Cerebro',
+      submitURL: 'http://crashes.cerebroapp.com/post',
+      autoSubmit: true
+    })
+  }
 }
 
 app.on('ready', () => {
@@ -55,7 +57,13 @@ app.on('ready', () => {
     tray.show()
   }
 
-  appUpdater = new AppUpdater(mainWindow)
+  autoStart.isEnabled().then(enabled => {
+    if (config.get('openAtLogin') !== enabled) {
+      autoStart.set(config.get('openAtLogin'))
+    }
+  })
+
+  initAutoUpdater(mainWindow)
 
   app.dock && app.dock.hide()
 })
@@ -72,8 +80,18 @@ ipcMain.on('updateSettings', (event, key, value) => {
   if (key === 'showInTray') {
     value ? tray.show() : tray.hide()
   }
+
   // Show or hide "development" section in tray menu
   if (key === 'developerMode') {
     tray.setIsDev(isDev())
+  }
+
+  // Enable or disable auto start
+  if (key === 'openAtLogin') {
+    autoStart.isEnabled().then(enabled => {
+      if (value !== enabled) {
+        autoStart.set(value)
+      }
+    })
   }
 })

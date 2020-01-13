@@ -1,17 +1,16 @@
 # <a href="../plugins.md">Plugins</a> → Examples
 You always can check out source code of existing plugins, like:
 
+* [cerebro-math](https://github.com/KELiON/cerebro-math)
+* [cerebro-google](https://github.com/KELiON/cerebro-google)
 * [cerebro-emoj](https://github.com/KELiON/cerebro-emoj)
 * [cerebro-gif](https://github.com/KELiON/cerebro-gif)
 * [cerebro-kill](https://github.com/KELiON/cerebro-kill)
 * [cerebro-ip](https://github.com/KELiON/cerebro-ip)
 
-
-Or any of [core](../../app/main/plugins/core) plugins.
-
 ### Using `id`
 ```js
-const plugin = ({display}) => {
+export const fn = ({display}) => {
   display({
     id: 'my-id',
     title: 'Loading'
@@ -22,10 +21,6 @@ const plugin = ({display}) => {
       title: `Fetched result: ${result}`
     })
   });
-}
-
-module.exports = {
-  fn: plugin,
 }
 ```
 
@@ -58,7 +53,7 @@ const plugin = (scope) => {
 }
 
 module.exports = {
-  name: 'Search emojis...'
+  name: 'Search emojis...',
   fn: plugin,
   keyword: 'emoj'
 }
@@ -140,4 +135,34 @@ const plugin = ({term, display}) => {
 module.exports = {
   fn: plugin
 };
+```
+
+### using `settings`
+```js
+const plugin = ({ display, settings }) => {
+  const icon = require('[path-to-icon]/icon.png');
+
+  display({
+    icon: settings.icon ? icon : '',
+    title: `${settings.username}, you have been around for ${settings.age}`,
+    subtitle: `Favorite languages: ${settings.languages.join(',')}`,
+  })
+}
+
+module.exports = {
+  fn: plugin,
+  settings: {
+    username: { type: 'string' },
+    age: { type: 'number', defaultValue: 42 },
+    icon: { type: 'bool' },
+    languages: {
+      type: 'option',
+      description: 'Your favorite programming languages'
+      options: ['JavaScript', 'Haskell', 'Rust'],
+      multi: true,
+      createable: true,
+    }
+  }
+}
+
 ```

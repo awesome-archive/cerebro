@@ -1,22 +1,16 @@
 import React, { Component, PropTypes } from 'react'
+import { VirtualScroll } from 'react-virtualized'
+
 import Row from './Row'
 import styles from './styles.css'
-import { VirtualScroll } from 'react-virtualized'
-import { bind } from 'lodash-decorators'
-
 import { RESULT_HEIGHT } from '../../constants/ui'
 
-export default class ResultsList extends Component {
-  static propTypes = {
-    results: PropTypes.array,
-    selected: PropTypes.number,
-    visibleResults: PropTypes.number,
-    onItemHover: PropTypes.func,
-    onSelect: PropTypes.func,
-    mainInputFocused: PropTypes.bool,
-  }
 
-  @bind()
+class ResultsList extends Component {
+  constructor(props) {
+    super(props)
+    this.rowRenderer = this.rowRenderer.bind(this)
+  }
   rowRenderer({ index }) {
     const result = this.props.results[index]
     const attrs = {
@@ -25,7 +19,7 @@ export default class ResultsList extends Component {
       // In some cases action should be executed and window should be closed
       // In some cases we should autocomplete value
       selected: index === this.props.selected,
-      onSelect: (event) => this.props.onSelect(result, event),
+      onSelect: event => this.props.onSelect(result, event),
       // Move selection to item under cursor
       onMouseMove: (event) => {
         const { selected, mainInputFocused, onItemHover } = this.props
@@ -88,3 +82,14 @@ export default class ResultsList extends Component {
     )
   }
 }
+
+ResultsList.propTypes = {
+  results: PropTypes.array,
+  selected: PropTypes.number,
+  visibleResults: PropTypes.number,
+  onItemHover: PropTypes.func,
+  onSelect: PropTypes.func,
+  mainInputFocused: PropTypes.bool,
+}
+
+export default ResultsList

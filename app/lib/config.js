@@ -1,10 +1,18 @@
 import { app, remote, ipcRenderer } from 'electron'
 import fs from 'fs'
 import { memoize } from 'cerebro-tools'
-import trackEvent from './trackEvent'
+import { trackEvent } from './trackEvent'
 import loadThemes from './loadThemes'
 
 const electronApp = remote ? remote.app : app
+
+// initiate portable mode
+// set data directory to ./userdata
+process.argv.forEach((arg) => {
+  if (arg.toLowerCase() === '-p' || arg.toLowerCase() === '--portable') {
+    electronApp.setPath('userData', `${process.cwd()}/userdata`)
+  }
+})
 
 const CONFIG_FILE = `${electronApp.getPath('userData')}/config.json`
 
@@ -21,7 +29,14 @@ const defaultSettings = memoize(() => {
     showInTray: true,
     firstStart: true,
     developerMode: false,
-    cleanOnHide: true
+    cleanOnHide: true,
+    skipDonateDialog: false,
+    lastShownDonateDialog: null,
+    plugins: {},
+    isMigratedPlugins: false,
+    trackingEnabled: true,
+    crashreportingEnabled: true,
+    openAtLogin: true
   }
 })
 
@@ -43,7 +58,7 @@ const get = (key) => {
   if (!fs.existsSync(CONFIG_FILE)) {
     // Save default config to local storage
     config = defaultSettings()
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config))
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2))
   } else {
     config = readConfig()
   }
@@ -65,12 +80,12 @@ const set = (key, value) => {
     ...readConfig()
   }
   config[key] = value
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config))
+  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2))
   // Track settings changes
   trackEvent({
     category: 'Settings',
     event: `Change ${key}`,
-    label: value,
+    label: value
   })
   if (ipcRenderer) {
     console.log('notify main process', key, value)
